@@ -1,0 +1,57 @@
+version: '3.4'
+
+services:
+  monitor:
+    build:
+      context: ..
+      dockerfile: deployments/Dockerfile.monitor
+    depends_on:
+      - ipfs-node-1
+      - ipfs-node-2
+    ports:
+      - "8080:8080"
+    environment:
+      PINATA_JWT_FILE: /run/secrets/pinata-jwt
+    secrets:
+      - pinata-jwt
+    command:
+      - "-execute-interval=5m"
+      - "-measure-binary=/usr/local/bin/ipfs-gw-measure"
+      - "-metric-addr=:8080"
+      - "--"
+      - "-gateway-host=cloudflare-ipfs.com"
+      - "-available-cid=QmPogkYhiUjQupWva1sydBGgLvb3WkCeY3ixpaujDG5ABa"
+      - "-available-cid=QmPVhvmrJQMnZRAUzfyjvzoGBUxKtZNmAJZmJnwHQVF6iP"
+      - "-ipfs.unavailable-cid=QmYTZ5DCYqeHJCsiMukZXGrnH5P7SMQkWCRj2QP5p8Ui4G"
+      - "-ipns.unavailable-name=k51qzi5uqu5dghmtokqchjcoq4mackw0xc4ykvoja89mwlg2q7o9g7pbfz1i91"
+      - "-dnslink.ipfs-domain=ipfs.monitor.cloudflareipfs.com"
+      - "-dnslink.ipns-domain=ipns.monitor.cloudflareipfs.com"
+      - "-dnslink.ipns-key=CAESQHP75VRSYid5UkNHNDiua6d16W8DhXDBROxYAAxC+ceLampLRQ3wgeTRQ7NU+s0E6xo4gFCtlkTGC3ZcLn3/iSo="
+      - "-dnslink.ipns-cid=bafybeiaysi4s6lnjev27ln5icwm6tueaw2vdykrtjkwiphwekaywqhcjze"
+      - "-dnslink.empty-domain=empty.monitor.cloudflareipfs.com"
+      - "-node=ipfs-node-1:5001"
+      - "-node=ipfs-node-2:5002"
+  ipfs-node-1:
+    build:
+      context: ..
+      dockerfile: deployments/Dockerfile.daemon
+    expose:
+      - "5001"
+    command:
+      - "-api-port=5001"
+    environment:
+      - "IPFS_PORT=4001"
+  ipfs-node-2:
+    build:
+      context: ..
+      dockerfile: deployments/Dockerfile.daemon
+    expose:
+      - "5002"
+    command:
+      - "-api-port=5002"
+    environment:
+      - "IPFS_PORT=4002"
+
+secrets:
+  pinata-jwt:
+    file: ../pinata-jwt.txt

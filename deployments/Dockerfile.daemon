@@ -1,0 +1,38 @@
+FROM golang:1.17.10-bullseye as builder
+
+WORKDIR /go
+
+ENV IPFS_VERSION v0.10.0
+
+RUN apt-get update && \
+    apt-get install -y build-essential git && \
+    git clone --depth 1 --branch $IPFS_VERSION https://github.com/ipfs/go-ipfs.git /go-ipfs && \
+    cd /go-ipfs && make build && \
+    /build/cleanup.sh
+
+COPY cmd/ipfs-daemon /go/cmd/ipfs-daemon
+COPY pkg /go/pkg
+COPY vendor /go/vendor
+COPY go.mod go.sum Makefile /go/
+
+ARG VERSION=unknown
+ARG DATE=unknown
+
+RUN make VERSION="$VERSION" DATE="$DATE" install
+
+FROM debian:bullseye
+
+RUN useradd -ms /bin/bash -u 1000 nonroot
+USER 1000
+
+COPY --from=builder /go-ipfs/cmd/ipfs/ipfs /usr/local/bin/ipfs
+COPY --from=builder /go/bin/ipfs-daemon /usr/local/bin/ipfs-daemon
+COPY scripts/start-daemon.sh /usr/local/bin/start-daemon
+
+COPY assets/root.crt /usr/local/share/dweb-proxy/root.crt
+
+ENV IPFS_PATH /home/nonroot/ipfs
+ENV IPFS_PORT 4001
+RUN mkdir -p $IPFS_PATH
+
+ENTRYPOINT ["/usr/local/bin/start-daemon"]

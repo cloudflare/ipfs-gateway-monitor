@@ -1,0 +1,5 @@
+*.swp
+/artifacts
+/bin
+/target
+pinata-jwt.txt
