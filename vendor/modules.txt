@@ -30,9 +30,6 @@ github.com/btcsuite/btcd/btcec
 # github.com/cenkalti/backoff v2.2.1+incompatible
 ## explicit
 github.com/cenkalti/backoff
-# github.com/cenkalti/backoff/v4 v4.1.1
-## explicit; go 1.13
-github.com/cenkalti/backoff/v4
 # github.com/cespare/xxhash v1.1.0
 ## explicit
 github.com/cespare/xxhash
@@ -48,6 +45,13 @@ github.com/cheekybits/genny/parse
 # github.com/cheggaaa/pb v1.0.29
 ## explicit; go 1.12
 github.com/cheggaaa/pb
+# github.com/containerd/cgroups v0.0.0-20201119153540-4cbc285b3327
+## explicit; go 1.13
+github.com/containerd/cgroups
+github.com/containerd/cgroups/stats/v1
+# github.com/coreos/go-systemd/v22 v22.3.2
+## explicit; go 1.12
+github.com/coreos/go-systemd/v22/dbus
 # github.com/crackcomm/go-gitignore v0.0.0-20170627025303-887ab5e44cc3
 ## explicit
 github.com/crackcomm/go-gitignore
@@ -69,9 +73,16 @@ github.com/dgraph-io/badger/y
 # github.com/dgraph-io/ristretto v0.0.2
 ## explicit; go 1.12
 github.com/dgraph-io/ristretto/z
+# github.com/docker/go-units v0.4.0
+## explicit
+github.com/docker/go-units
 # github.com/dustin/go-humanize v1.0.0
 ## explicit
 github.com/dustin/go-humanize
+# github.com/elastic/gosigar v0.12.0
+## explicit; go 1.14
+github.com/elastic/gosigar
+github.com/elastic/gosigar/sys/windows
 # github.com/elgris/jsondiff v0.0.0-20160530203242-765b5c24c302
 ## explicit
 github.com/elgris/jsondiff
@@ -105,6 +116,9 @@ github.com/go-logfmt/logfmt
 # github.com/go-task/slim-sprig v0.0.0-20210107165309-348f09dbbbc0
 ## explicit; go 1.13
 github.com/go-task/slim-sprig
+# github.com/godbus/dbus/v5 v5.0.4
+## explicit; go 1.12
+github.com/godbus/dbus/v5
 # github.com/gogo/protobuf v1.3.2
 ## explicit; go 1.15
 github.com/gogo/protobuf/gogoproto
@@ -190,8 +204,8 @@ github.com/ipfs/go-cid
 ## explicit
 github.com/ipfs/go-cidutil
 github.com/ipfs/go-cidutil/cidenc
-# github.com/ipfs/go-datastore v0.4.6
-## explicit; go 1.15
+# github.com/ipfs/go-datastore v0.5.0
+## explicit; go 1.16
 github.com/ipfs/go-datastore
 github.com/ipfs/go-datastore/autobatch
 github.com/ipfs/go-datastore/keytransform
@@ -199,14 +213,14 @@ github.com/ipfs/go-datastore/mount
 github.com/ipfs/go-datastore/namespace
 github.com/ipfs/go-datastore/query
 github.com/ipfs/go-datastore/sync
-# github.com/ipfs/go-ds-badger v0.2.7
+# github.com/ipfs/go-ds-badger v0.3.0
 ## explicit; go 1.13
 github.com/ipfs/go-ds-badger
 # github.com/ipfs/go-ds-flatfs v0.4.5
 ## explicit; go 1.13
 github.com/ipfs/go-ds-flatfs
-# github.com/ipfs/go-ds-leveldb v0.4.2
-## explicit; go 1.12
+# github.com/ipfs/go-ds-leveldb v0.5.0
+## explicit; go 1.16
 github.com/ipfs/go-ds-leveldb
 # github.com/ipfs/go-ds-measure v0.1.0
 ## explicit; go 1.12
@@ -383,8 +397,8 @@ github.com/ipfs/go-log
 github.com/ipfs/go-log/tracer
 github.com/ipfs/go-log/tracer/wire
 github.com/ipfs/go-log/writer
-# github.com/ipfs/go-log/v2 v2.3.0
-## explicit; go 1.15
+# github.com/ipfs/go-log/v2 v2.5.0
+## explicit; go 1.16
 github.com/ipfs/go-log/v2
 # github.com/ipfs/go-merkledag v0.4.0
 ## explicit; go 1.15
@@ -495,11 +509,12 @@ github.com/jbenet/goprocess/periodic
 ## explicit; go 1.14
 github.com/kisielk/errcheck
 github.com/kisielk/errcheck/errcheck
-# github.com/klauspost/compress v1.11.7
-## explicit; go 1.13
+# github.com/klauspost/compress v1.13.6
+## explicit; go 1.15
+github.com/klauspost/compress
 github.com/klauspost/compress/fse
 github.com/klauspost/compress/huff0
-github.com/klauspost/compress/snappy
+github.com/klauspost/compress/internal/snapref
 github.com/klauspost/compress/zstd
 github.com/klauspost/compress/zstd/internal/xxhash
 # github.com/klauspost/cpuid/v2 v2.0.9
@@ -508,9 +523,6 @@ github.com/klauspost/cpuid/v2
 # github.com/koron/go-ssdp v0.0.2
 ## explicit; go 1.13
 github.com/koron/go-ssdp
-# github.com/libp2p/go-addr-util v0.1.0
-## explicit; go 1.15
-github.com/libp2p/go-addr-util
 # github.com/libp2p/go-buffer-pool v0.0.2
 ## explicit; go 1.12
 github.com/libp2p/go-buffer-pool
@@ -518,8 +530,8 @@ github.com/libp2p/go-buffer-pool
 ## explicit; go 1.14
 github.com/libp2p/go-cidranger
 github.com/libp2p/go-cidranger/net
-# github.com/libp2p/go-conn-security-multistream v0.2.1
-## explicit; go 1.12
+# github.com/libp2p/go-conn-security-multistream v0.3.0
+## explicit; go 1.16
 github.com/libp2p/go-conn-security-multistream
 # github.com/libp2p/go-doh-resolver v0.3.1
 ## explicit; go 1.15
@@ -530,37 +542,48 @@ github.com/libp2p/go-eventbus
 # github.com/libp2p/go-flow-metrics v0.0.3
 ## explicit; go 1.12
 github.com/libp2p/go-flow-metrics
-# github.com/libp2p/go-libp2p v0.15.0
-## explicit; go 1.15
+# github.com/libp2p/go-libp2p v0.18.0
+## explicit; go 1.16
 github.com/libp2p/go-libp2p
 github.com/libp2p/go-libp2p/config
 github.com/libp2p/go-libp2p/p2p/discovery/mdns
 github.com/libp2p/go-libp2p/p2p/discovery/mdns_legacy
+github.com/libp2p/go-libp2p/p2p/discovery/routing
+github.com/libp2p/go-libp2p/p2p/host/autonat
+github.com/libp2p/go-libp2p/p2p/host/autonat/pb
+github.com/libp2p/go-libp2p/p2p/host/autorelay
 github.com/libp2p/go-libp2p/p2p/host/basic
-github.com/libp2p/go-libp2p/p2p/host/relay
+github.com/libp2p/go-libp2p/p2p/host/pstoremanager
+github.com/libp2p/go-libp2p/p2p/host/relaysvc
 github.com/libp2p/go-libp2p/p2p/host/routed
+github.com/libp2p/go-libp2p/p2p/net/connmgr
+github.com/libp2p/go-libp2p/p2p/protocol/circuitv1/pb
+github.com/libp2p/go-libp2p/p2p/protocol/circuitv1/relay
+github.com/libp2p/go-libp2p/p2p/protocol/circuitv2/client
+github.com/libp2p/go-libp2p/p2p/protocol/circuitv2/pb
+github.com/libp2p/go-libp2p/p2p/protocol/circuitv2/proto
+github.com/libp2p/go-libp2p/p2p/protocol/circuitv2/relay
+github.com/libp2p/go-libp2p/p2p/protocol/circuitv2/util
+github.com/libp2p/go-libp2p/p2p/protocol/holepunch
+github.com/libp2p/go-libp2p/p2p/protocol/holepunch/pb
 github.com/libp2p/go-libp2p/p2p/protocol/identify
 github.com/libp2p/go-libp2p/p2p/protocol/identify/pb
 github.com/libp2p/go-libp2p/p2p/protocol/ping
-# github.com/libp2p/go-libp2p-asn-util v0.0.0-20200825225859-85005c6cf052
-## explicit; go 1.14
+# github.com/libp2p/go-libp2p-asn-util v0.1.0
+## explicit; go 1.16
 github.com/libp2p/go-libp2p-asn-util
-# github.com/libp2p/go-libp2p-autonat v0.4.2
-## explicit; go 1.13
-github.com/libp2p/go-libp2p-autonat
-github.com/libp2p/go-libp2p-autonat/pb
-# github.com/libp2p/go-libp2p-blankhost v0.2.0
-## explicit; go 1.14
+# github.com/libp2p/go-libp2p-blankhost v0.3.0
+## explicit; go 1.16
 github.com/libp2p/go-libp2p-blankhost
-# github.com/libp2p/go-libp2p-circuit v0.4.0
-## explicit; go 1.12
+# github.com/libp2p/go-libp2p-circuit v0.6.0
+## explicit; go 1.16
 github.com/libp2p/go-libp2p-circuit
 github.com/libp2p/go-libp2p-circuit/pb
 # github.com/libp2p/go-libp2p-connmgr v0.2.4
 ## explicit; go 1.13
 github.com/libp2p/go-libp2p-connmgr
-# github.com/libp2p/go-libp2p-core v0.9.0
-## explicit; go 1.15
+# github.com/libp2p/go-libp2p-core v0.14.0
+## explicit; go 1.16
 github.com/libp2p/go-libp2p-core
 github.com/libp2p/go-libp2p-core/connmgr
 github.com/libp2p/go-libp2p-core/control
@@ -617,18 +640,18 @@ github.com/libp2p/go-libp2p-kbucket/peerdiversity
 # github.com/libp2p/go-libp2p-loggables v0.1.0
 ## explicit
 github.com/libp2p/go-libp2p-loggables
-# github.com/libp2p/go-libp2p-mplex v0.4.1
-## explicit; go 1.12
+# github.com/libp2p/go-libp2p-mplex v0.6.0
+## explicit; go 1.16
 github.com/libp2p/go-libp2p-mplex
-# github.com/libp2p/go-libp2p-nat v0.0.6
-## explicit; go 1.13
+# github.com/libp2p/go-libp2p-nat v0.1.0
+## explicit; go 1.16
 github.com/libp2p/go-libp2p-nat
-# github.com/libp2p/go-libp2p-noise v0.2.2
-## explicit; go 1.15
+# github.com/libp2p/go-libp2p-noise v0.3.0
+## explicit; go 1.16
 github.com/libp2p/go-libp2p-noise
 github.com/libp2p/go-libp2p-noise/pb
-# github.com/libp2p/go-libp2p-peerstore v0.2.8
-## explicit; go 1.15
+# github.com/libp2p/go-libp2p-peerstore v0.6.0
+## explicit; go 1.16
 github.com/libp2p/go-libp2p-peerstore
 github.com/libp2p/go-libp2p-peerstore/addr
 github.com/libp2p/go-libp2p-peerstore/pstoremem
@@ -643,79 +666,75 @@ github.com/libp2p/go-libp2p-pubsub/pb
 ## explicit; go 1.12
 github.com/libp2p/go-libp2p-pubsub-router
 github.com/libp2p/go-libp2p-pubsub-router/pb
-# github.com/libp2p/go-libp2p-quic-transport v0.12.0
+# github.com/libp2p/go-libp2p-quic-transport v0.16.1
 ## explicit; go 1.16
 github.com/libp2p/go-libp2p-quic-transport
 # github.com/libp2p/go-libp2p-record v0.1.3
 ## explicit; go 1.12
 github.com/libp2p/go-libp2p-record
 github.com/libp2p/go-libp2p-record/pb
+# github.com/libp2p/go-libp2p-resource-manager v0.1.5
+## explicit; go 1.16
+github.com/libp2p/go-libp2p-resource-manager
 # github.com/libp2p/go-libp2p-routing-helpers v0.2.3
 ## explicit; go 1.13
 github.com/libp2p/go-libp2p-routing-helpers
-# github.com/libp2p/go-libp2p-swarm v0.5.3
-## explicit; go 1.15
+# github.com/libp2p/go-libp2p-swarm v0.10.2
+## explicit; go 1.16
 github.com/libp2p/go-libp2p-swarm
-# github.com/libp2p/go-libp2p-tls v0.2.0
-## explicit; go 1.15
+# github.com/libp2p/go-libp2p-tls v0.3.1
+## explicit; go 1.16
 github.com/libp2p/go-libp2p-tls
-# github.com/libp2p/go-libp2p-transport-upgrader v0.4.6
-## explicit; go 1.15
+# github.com/libp2p/go-libp2p-transport-upgrader v0.7.1
+## explicit; go 1.16
 github.com/libp2p/go-libp2p-transport-upgrader
 # github.com/libp2p/go-libp2p-xor v0.0.0-20210714161855-5c005aca55db
 ## explicit; go 1.15
 github.com/libp2p/go-libp2p-xor/kademlia
 github.com/libp2p/go-libp2p-xor/key
 github.com/libp2p/go-libp2p-xor/trie
-# github.com/libp2p/go-libp2p-yamux v0.5.4
-## explicit; go 1.15
+# github.com/libp2p/go-libp2p-yamux v0.8.2
+## explicit; go 1.16
 github.com/libp2p/go-libp2p-yamux
-# github.com/libp2p/go-maddr-filter v0.1.0
-## explicit; go 1.13
-github.com/libp2p/go-maddr-filter
-# github.com/libp2p/go-mplex v0.3.0
-## explicit; go 1.13
+# github.com/libp2p/go-mplex v0.6.0
+## explicit; go 1.16
 github.com/libp2p/go-mplex
-# github.com/libp2p/go-msgio v0.0.6
-## explicit; go 1.14
+# github.com/libp2p/go-msgio v0.1.0
+## explicit; go 1.16
 github.com/libp2p/go-msgio
 github.com/libp2p/go-msgio/protoio
-# github.com/libp2p/go-nat v0.0.5
-## explicit; go 1.12
+# github.com/libp2p/go-nat v0.1.0
+## explicit; go 1.16
 github.com/libp2p/go-nat
-# github.com/libp2p/go-netroute v0.1.6
-## explicit; go 1.13
+# github.com/libp2p/go-netroute v0.2.0
+## explicit; go 1.16
 github.com/libp2p/go-netroute
 # github.com/libp2p/go-openssl v0.0.7
 ## explicit; go 1.12
 github.com/libp2p/go-openssl
 github.com/libp2p/go-openssl/utils
-# github.com/libp2p/go-reuseport v0.0.2
-## explicit
+# github.com/libp2p/go-reuseport v0.1.0
+## explicit; go 1.16
 github.com/libp2p/go-reuseport
-# github.com/libp2p/go-reuseport-transport v0.0.5
-## explicit; go 1.15
+# github.com/libp2p/go-reuseport-transport v0.1.0
+## explicit; go 1.16
 github.com/libp2p/go-reuseport-transport
-# github.com/libp2p/go-sockaddr v0.1.1
-## explicit; go 1.13
-github.com/libp2p/go-sockaddr
-github.com/libp2p/go-sockaddr/net
-# github.com/libp2p/go-stream-muxer-multistream v0.3.0
-## explicit; go 1.12
+# github.com/libp2p/go-stream-muxer-multistream v0.4.0
+## explicit; go 1.16
 github.com/libp2p/go-stream-muxer-multistream
-# github.com/libp2p/go-tcp-transport v0.2.8
+# github.com/libp2p/go-tcp-transport v0.5.1
 ## explicit; go 1.16
 github.com/libp2p/go-tcp-transport
-# github.com/libp2p/go-ws-transport v0.5.0
-## explicit; go 1.15
+# github.com/libp2p/go-ws-transport v0.6.0
+## explicit; go 1.16
 github.com/libp2p/go-ws-transport
-# github.com/libp2p/go-yamux/v2 v2.2.0
-## explicit; go 1.15
-github.com/libp2p/go-yamux/v2
-# github.com/libp2p/zeroconf/v2 v2.0.0
-## explicit; go 1.15
+# github.com/libp2p/go-yamux/v3 v3.0.2
+## explicit; go 1.16
+github.com/libp2p/go-yamux/v3
+# github.com/libp2p/zeroconf/v2 v2.1.1
+## explicit; go 1.16
 github.com/libp2p/zeroconf/v2
-# github.com/lucas-clemente/quic-go v0.23.0
+# github.com/lucas-clemente/quic-go v0.25.0
 ## explicit; go 1.16
 github.com/lucas-clemente/quic-go
 github.com/lucas-clemente/quic-go/internal/ackhandler
@@ -737,13 +756,16 @@ github.com/marten-seemann/qtls-go1-16
 # github.com/marten-seemann/qtls-go1-17 v0.1.0
 ## explicit; go 1.17
 github.com/marten-seemann/qtls-go1-17
+# github.com/marten-seemann/qtls-go1-18 v0.1.0-beta.1
+## explicit; go 1.18
+github.com/marten-seemann/qtls-go1-18
 # github.com/marten-seemann/tcp v0.0.0-20210406111302-dfbc87cc63fd
 ## explicit; go 1.15
 github.com/marten-seemann/tcp
 # github.com/mattn/go-colorable v0.1.4
 ## explicit
 github.com/mattn/go-colorable
-# github.com/mattn/go-isatty v0.0.13
+# github.com/mattn/go-isatty v0.0.14
 ## explicit; go 1.12
 github.com/mattn/go-isatty
 # github.com/mattn/go-runewidth v0.0.4
@@ -782,8 +804,8 @@ github.com/multiformats/go-base32
 # github.com/multiformats/go-base36 v0.1.0
 ## explicit; go 1.11
 github.com/multiformats/go-base36
-# github.com/multiformats/go-multiaddr v0.4.0
-## explicit; go 1.15
+# github.com/multiformats/go-multiaddr v0.5.0
+## explicit; go 1.16
 github.com/multiformats/go-multiaddr
 github.com/multiformats/go-multiaddr/net
 # github.com/multiformats/go-multiaddr-dns v0.3.1
@@ -844,11 +866,17 @@ github.com/onsi/ginkgo/reporters/stenographer
 github.com/onsi/ginkgo/reporters/stenographer/support/go-colorable
 github.com/onsi/ginkgo/reporters/stenographer/support/go-isatty
 github.com/onsi/ginkgo/types
+# github.com/opencontainers/runtime-spec v1.0.2
+## explicit
+github.com/opencontainers/runtime-spec/specs-go
 # github.com/opentracing/opentracing-go v1.2.0
 ## explicit; go 1.14
 github.com/opentracing/opentracing-go
 github.com/opentracing/opentracing-go/ext
 github.com/opentracing/opentracing-go/log
+# github.com/pbnjay/memory v0.0.0-20210728143218-7b4eea64cf58
+## explicit; go 1.16
+github.com/pbnjay/memory
 # github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors
@@ -885,6 +913,12 @@ github.com/prometheus/procfs/internal/util
 ## explicit; go 1.13
 github.com/prometheus/statsd_exporter/pkg/mapper
 github.com/prometheus/statsd_exporter/pkg/mapper/fsm
+# github.com/raulk/clock v1.1.0
+## explicit; go 1.14
+github.com/raulk/clock
+# github.com/raulk/go-watchdog v1.2.0
+## explicit; go 1.15
+github.com/raulk/go-watchdog
 # github.com/rs/cors v1.7.0
 ## explicit
 github.com/rs/cors
@@ -994,7 +1028,7 @@ go.uber.org/fx/internal/lifecycle
 # go.uber.org/multierr v1.7.0
 ## explicit; go 1.14
 go.uber.org/multierr
-# go.uber.org/zap v1.19.0
+# go.uber.org/zap v1.19.1
 ## explicit; go 1.13
 go.uber.org/zap
 go.uber.org/zap/buffer
@@ -1056,7 +1090,7 @@ golang.org/x/sys/execabs
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/tools v0.1.1
+# golang.org/x/tools v0.1.5
 ## explicit; go 1.17
 golang.org/x/tools/go/ast/astutil
 golang.org/x/tools/go/ast/inspector
@@ -1074,6 +1108,7 @@ golang.org/x/tools/internal/gocommand
 golang.org/x/tools/internal/gopathwalk
 golang.org/x/tools/internal/imports
 golang.org/x/tools/internal/packagesinternal
+golang.org/x/tools/internal/typeparams
 golang.org/x/tools/internal/typesinternal
 # golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 ## explicit; go 1.11

@@ -3,11 +3,11 @@ package zeroconf
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"net"
 	"strings"
 	"time"
 
-	"github.com/cenkalti/backoff/v4"
 	"github.com/miekg/dns"
 	"golang.org/x/net/ipv4"
 	"golang.org/x/net/ipv6"
@@ -25,6 +25,8 @@ const (
 	IPv6        IPType = 0x02
 	IPv4AndIPv6        = IPv4 | IPv6 // default option
 )
+
+var initialQueryInterval = 4 * time.Second
 
 // Client structure encapsulates both IPv4/IPv6 UDP connections.
 type client struct {
@@ -365,33 +367,16 @@ func (c *client) recv(ctx context.Context, l interface{}, msgCh chan *dns.Msg) {
 // TODO: move error reporting to shutdown function as periodicQuery is called from
 // go routine context.
 func (c *client) periodicQuery(ctx context.Context, params *lookupParams) error {
-	bo := backoff.NewExponentialBackOff()
-	bo.InitialInterval = 4 * time.Second
-	bo.MaxInterval = 60 * time.Second
-	bo.Reset()
+	// Do the first query immediately.
+	if err := c.query(params); err != nil {
+		return err
+	}
 
-	var timer *time.Timer
-	defer func() {
-		if timer != nil {
-			timer.Stop()
-		}
-	}()
+	const maxInterval = 60 * time.Second
+	interval := initialQueryInterval
+	timer := time.NewTimer(interval)
+	defer timer.Stop()
 	for {
-		// Do periodic query.
-		if err := c.query(params); err != nil {
-			return err
-		}
-		// Backoff and cancel logic.
-		wait := bo.NextBackOff()
-		if wait == backoff.Stop {
-			return fmt.Errorf("periodicQuery: abort due to timeout")
-		}
-		if timer == nil {
-			timer = time.NewTimer(wait)
-		} else {
-			timer.Reset(wait)
-		}
-
 		select {
 		case <-timer.C:
 			// Wait for next iteration.
@@ -405,6 +390,19 @@ func (c *client) periodicQuery(ctx context.Context, params *lookupParams) error 
 			}
 			return ctx.Err()
 		}
+
+		if err := c.query(params); err != nil {
+			return err
+		}
+		// Exponential increase of the interval with jitter:
+		// the new interval will be between 1.5x and 2.5x the old interval, capped at maxInterval.
+		if interval != maxInterval {
+			interval += time.Duration(rand.Int63n(interval.Nanoseconds())) + interval/2
+			if interval > maxInterval {
+				interval = maxInterval
+			}
+		}
+		timer.Reset(interval)
 	}
 }
 
