@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"io"
-	"net"
+	"math/rand"
 	"strings"
 	"sync"
 
@@ -26,9 +26,8 @@ const (
 var log = logging.Logger("mdns")
 
 type Service interface {
+	Start() error
 	io.Closer
-	RegisterNotifee(Notifee)
-	UnregisterNotifee(Notifee)
 }
 
 type Notifee interface {
@@ -38,30 +37,38 @@ type Notifee interface {
 type mdnsService struct {
 	host        host.Host
 	serviceName string
+	peerName    string
 
 	// The context is canceled when Close() is called.
+	ctx       context.Context
 	ctxCancel context.CancelFunc
 
 	resolverWG sync.WaitGroup
 	server     *zeroconf.Server
 
-	mutex    sync.Mutex
-	notifees []Notifee
+	notifee Notifee
 }
 
-func NewMdnsService(host host.Host, serviceName string) *mdnsService {
-	ctx, cancel := context.WithCancel(context.Background())
+func NewMdnsService(host host.Host, serviceName string, notifee Notifee) *mdnsService {
 	if serviceName == "" {
 		serviceName = ServiceName
 	}
 	s := &mdnsService{
-		ctxCancel:   cancel,
 		host:        host,
 		serviceName: serviceName,
+		peerName:    randomString(32 + rand.Intn(32)), // generate a random string between 32 and 63 characters long
+		notifee:     notifee,
 	}
-	s.startServer()
-	s.startResolver(ctx)
+	s.ctx, s.ctxCancel = context.WithCancel(context.Background())
 	return s
+}
+
+func (s *mdnsService) Start() error {
+	if err := s.startServer(); err != nil {
+		return err
+	}
+	s.startResolver(s.ctx)
+	return nil
 }
 
 func (s *mdnsService) Close() error {
@@ -78,18 +85,14 @@ func (s *mdnsService) Close() error {
 func (s *mdnsService) getIPs(addrs []ma.Multiaddr) ([]string, error) {
 	var ip4, ip6 string
 	for _, addr := range addrs {
-		network, hostport, err := manet.DialArgs(addr)
-		if err != nil {
+		first, _ := ma.SplitFirst(addr)
+		if first == nil {
 			continue
 		}
-		host, _, err := net.SplitHostPort(hostport)
-		if err != nil {
-			continue
-		}
-		if ip4 == "" && (network == "udp4" || network == "tcp4") {
-			ip4 = host
-		} else if ip6 == "" && (network == "udp6" || network == "tcp6") {
-			ip6 = host
+		if ip4 == "" && first.Protocol().Code == ma.P_IP4 {
+			ip4 = first.Value()
+		} else if ip6 == "" && first.Protocol().Code == ma.P_IP6 {
+			ip6 = first.Value()
 		}
 	}
 	ips := make([]string, 0, 2)
@@ -103,10 +106,6 @@ func (s *mdnsService) getIPs(addrs []ma.Multiaddr) ([]string, error) {
 		return nil, errors.New("didn't find any IP addresses")
 	}
 	return ips, nil
-}
-
-func (s *mdnsService) mdnsInstance() string {
-	return string(s.host.ID())
 }
 
 func (s *mdnsService) startServer() error {
@@ -134,11 +133,11 @@ func (s *mdnsService) startServer() error {
 	}
 
 	server, err := zeroconf.RegisterProxy(
-		s.mdnsInstance(),
+		s.peerName,
 		s.serviceName,
 		mdnsDomain,
-		4001,                 // we have to pass in a port number here, but libp2p only uses the TXT records
-		s.host.ID().Pretty(), // TODO: deals with peer IDs longer than 63 characters
+		4001, // we have to pass in a port number here, but libp2p only uses the TXT records
+		s.peerName,
 		ips,
 		txts,
 		nil,
@@ -176,13 +175,9 @@ func (s *mdnsService) startResolver(ctx context.Context) {
 				log.Debugf("failed to get peer info: %s", err)
 				continue
 			}
-			s.mutex.Lock()
 			for _, info := range infos {
-				for _, notif := range s.notifees {
-					go notif.HandlePeerFound(info)
-				}
+				go s.notifee.HandlePeerFound(info)
 			}
-			s.mutex.Unlock()
 		}
 	}()
 	go func() {
@@ -193,24 +188,11 @@ func (s *mdnsService) startResolver(ctx context.Context) {
 	}()
 }
 
-func (s *mdnsService) RegisterNotifee(n Notifee) {
-	s.mutex.Lock()
-	s.notifees = append(s.notifees, n)
-	s.mutex.Unlock()
-}
-
-func (s *mdnsService) UnregisterNotifee(n Notifee) {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-
-	found := -1
-	for i, notif := range s.notifees {
-		if notif == n {
-			found = i
-			break
-		}
+func randomString(l int) string {
+	const alphabet = "abcdefghijklmnopqrstuvwxyz0123456789"
+	s := make([]byte, 0, l)
+	for i := 0; i < l; i++ {
+		s = append(s, alphabet[rand.Intn(len(alphabet))])
 	}
-	if found != -1 {
-		s.notifees = append(s.notifees[:found], s.notifees[found+1:]...)
-	}
+	return string(s)
 }

@@ -3,6 +3,7 @@ package mdns_legacy
 import (
 	"context"
 	"errors"
+	"io"
 	"net"
 	"sync"
 	"time"
@@ -26,7 +27,12 @@ var log = logging.Logger("mdns_legacy")
 
 const ServiceTag = "_ipfs-discovery._udp"
 
-type Service = mdnsnew.Service
+type Service interface {
+	io.Closer
+	RegisterNotifee(Notifee)
+	UnregisterNotifee(Notifee)
+}
+
 type Notifee = mdnsnew.Notifee
 
 type mdnsService struct {
