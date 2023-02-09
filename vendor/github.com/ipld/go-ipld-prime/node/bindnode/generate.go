@@ -1,9 +1,3 @@
-//go:build bindnodegen
-// +build bindnodegen
-
-// TODO: move this to a "package main" in node/bindnode/bindnodegen
-// once we are able to parse a schema file from disk.
-
 package bindnode
 
 import (
@@ -38,6 +32,10 @@ func produceGoType(goTypes map[string]string, typ schema.Type) (name, src string
 		return goTypeString.String(), ""
 	case *schema.TypeBytes:
 		return goTypeBytes.String(), ""
+	case *schema.TypeLink:
+		return goTypeLink.String(), "" // datamodel.Link
+	case *schema.TypeAny:
+		return goTypeNode.String(), "" // datamodel.Node
 	}
 
 	// Results are cached in goTypes.
@@ -56,6 +54,9 @@ func produceGoTypeInner(goTypes map[string]string, name string, typ schema.Type)
 	goTypes[name] = "WIP"
 
 	switch typ := typ.(type) {
+	case *schema.TypeEnum:
+		// TODO: also generate named constants for the members.
+		return goTypeString.String()
 	case *schema.TypeStruct:
 		var b strings.Builder
 		fmt.Fprintf(&b, "struct {\n")
@@ -104,6 +105,14 @@ func produceGoTypeInner(goTypes map[string]string, name string, typ schema.Type)
 	panic(fmt.Sprintf("%T\n", typ))
 }
 
+// ProduceGoTypes infers Go types from an IPLD schema in ts
+// and writes their Go source code type declarations to w.
+// Note that just the types are written,
+// without a package declaration nor any imports.
+//
+// This gives a good starting point when wanting to use bindnode with Go types,
+// but users will generally want to own and modify the types afterward,
+// so they can add documentation or tweak the types as needed.
 func ProduceGoTypes(w io.Writer, ts *schema.TypeSystem) error {
 	goTypes := make(map[string]string)
 	var buf bytes.Buffer

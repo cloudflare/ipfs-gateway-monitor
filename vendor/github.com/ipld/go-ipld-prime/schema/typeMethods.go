@@ -17,6 +17,7 @@ func (TypeString) TypeKind() TypeKind { return TypeKind_String }
 func (TypeBytes) TypeKind() TypeKind  { return TypeKind_Bytes }
 func (TypeInt) TypeKind() TypeKind    { return TypeKind_Int }
 func (TypeFloat) TypeKind() TypeKind  { return TypeKind_Float }
+func (TypeAny) TypeKind() TypeKind    { return TypeKind_Any }
 func (TypeMap) TypeKind() TypeKind    { return TypeKind_Map }
 func (TypeList) TypeKind() TypeKind   { return TypeKind_List }
 func (TypeLink) TypeKind() TypeKind   { return TypeKind_Link }
@@ -65,6 +66,9 @@ func (t TypeStruct) RepresentationBehavior() datamodel.Kind {
 func (t TypeEnum) RepresentationBehavior() datamodel.Kind {
 	// TODO: this should have a representation strategy switch too; sometimes that will indicate int representation behavior.
 	return datamodel.Kind_String
+}
+func (t TypeAny) RepresentationBehavior() datamodel.Kind {
+	return datamodel.Kind_Invalid // TODO: what can we possibly do here?
 }
 
 /* interesting methods per Type type */
@@ -171,11 +175,7 @@ func (r UnionRepresentation_Kinded) GetMember(k datamodel.Kind) TypeName {
 
 // Fields returns a slice of descriptions of the object's fields.
 func (t TypeStruct) Fields() []StructField {
-	a := make([]StructField, len(t.fields))
-	for i := range t.fields {
-		a[i] = t.fields[i]
-	}
-	return a
+	return t.fields
 }
 
 // Field looks up a StructField by name, or returns nil if no such field.
@@ -246,17 +246,29 @@ func (r StructRepresentation_Map) FieldHasRename(field StructField) bool {
 	return ok
 }
 
+// FieldImplicit returns the 'implicit' value for a field, or nil, if there isn't one.
+//
+// Because this returns the golang ImplicitValue type, which is an interface,
+// golang type switching is needed to distinguish what it holds.
+// (In other words, be warned that this function is not very friendly to use from templating engines.)
+func (r StructRepresentation_Map) FieldImplicit(field StructField) ImplicitValue {
+	if r.implicits == nil {
+		return nil
+	}
+	return r.implicits[field.name]
+}
+
 func (r StructRepresentation_Stringjoin) GetDelim() string {
 	return r.sep
 }
 
 // Members returns a slice the strings which are valid inhabitants of this enum.
 func (t TypeEnum) Members() []string {
-	a := make([]string, len(t.members))
-	for i := range t.members {
-		a[i] = t.members[i]
-	}
-	return a
+	return t.members
+}
+
+func (t TypeEnum) RepresentationStrategy() EnumRepresentation {
+	return t.representation
 }
 
 // Links can keep a referenced type, which is a hint only about the data on the
