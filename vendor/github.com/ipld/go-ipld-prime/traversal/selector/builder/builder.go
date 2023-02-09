@@ -30,7 +30,9 @@ type SelectorSpecBuilder interface {
 	ExploreIndex(index int64, next SelectorSpec) SelectorSpec
 	ExploreRange(start, end int64, next SelectorSpec) SelectorSpec
 	ExploreFields(ExploreFieldsSpecBuildingClosure) SelectorSpec
+	ExploreInterpretAs(as string, next SelectorSpec) SelectorSpec
 	Matcher() SelectorSpec
+	MatcherSubset(from, to int64) SelectorSpec
 }
 
 // ExploreFieldsSpecBuildingClosure is a function that provided to SelectorSpecBuilder's
@@ -150,10 +152,34 @@ func (ssb *selectorSpecBuilder) ExploreFields(specBuilder ExploreFieldsSpecBuild
 	}
 }
 
+func (ssb *selectorSpecBuilder) ExploreInterpretAs(as string, next SelectorSpec) SelectorSpec {
+	return selectorSpec{
+		fluent.MustBuildMap(ssb.np, 1, func(na fluent.MapAssembler) {
+			na.AssembleEntry(selector.SelectorKey_ExploreInterpretAs).CreateMap(1, func(na fluent.MapAssembler) {
+				na.AssembleEntry(selector.SelectorKey_As).AssignString(as)
+				na.AssembleEntry(selector.SelectorKey_Next).AssignNode(next.Node())
+			})
+		}),
+	}
+}
+
 func (ssb *selectorSpecBuilder) Matcher() SelectorSpec {
 	return selectorSpec{
 		fluent.MustBuildMap(ssb.np, 1, func(na fluent.MapAssembler) {
 			na.AssembleEntry(selector.SelectorKey_Matcher).CreateMap(0, func(na fluent.MapAssembler) {})
+		}),
+	}
+}
+
+func (ssb *selectorSpecBuilder) MatcherSubset(from, to int64) SelectorSpec {
+	return selectorSpec{
+		fluent.MustBuildMap(ssb.np, 1, func(na fluent.MapAssembler) {
+			na.AssembleEntry(selector.SelectorKey_Matcher).CreateMap(1, func(na fluent.MapAssembler) {
+				na.AssembleEntry(selector.SelectorKey_Subset).CreateMap(2, func(na fluent.MapAssembler) {
+					na.AssembleEntry(selector.SelectorKey_From).AssignInt(from)
+					na.AssembleEntry(selector.SelectorKey_To).AssignInt(to)
+				})
+			})
 		}),
 	}
 }

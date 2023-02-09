@@ -81,8 +81,9 @@ type Selector interface {
 	// (If that happens, we're currently assuming the ADL has a reasonable caching behavior.  It's very likely that the traversal will look up the same paths that Explore just looked up (assuming the Condition told exploration to continue).)
 	//
 
-	// Interests should return either a list of PageSegment we're likely interested in,
+	// Interests should return either a list of PathSegment we're likely interested in,
 	// **or nil**, which indicates we're a high-cardinality or expression-based selection clause and thus we'll need all segments proposed to us.
+	// Note that a non-nil zero length list of PathSegment is distinguished from nil: this would mean this selector is interested absolutely nothing.
 	//
 	// Traversal will call this before calling Explore, and use it to try to call Explore less often (or even avoid iterating on the data node at all).
 	Interests() []datamodel.PathSegment
@@ -105,6 +106,12 @@ type Selector interface {
 	// Only "Matcher" clauses actually implement this in a way that ever returns "true".
 	// See the Selector specs for discussion on "matched" vs "reached"/"visited" nodes.
 	Decide(node datamodel.Node) bool
+
+	// Match is an extension to Decide allowing the matcher to `decide` a transformation of
+	// the matched node. This is used for `Subset` match behavior. If the node is matched,
+	// the first argument will be the matched node. If it is not matched, the first argument
+	// will be null. If there is an error, the first argument will be null.
+	Match(node datamodel.Node) (datamodel.Node, error)
 }
 
 // REVIEW: do ParsedParent and ParseContext need to be exported?  They're mostly used during the compilation process.
@@ -120,7 +127,7 @@ type ParseContext struct {
 	parentStack []ParsedParent
 }
 
-// CompileSelector accepts an datamodel.Node which should contain data that declares a Selector.
+// CompileSelector accepts a datamodel.Node which should contain data that declares a Selector.
 // The data layout expected for this declaration is documented in https://datamodel.io/specs/selectors/ .
 //
 // If the Selector is compiled successfully, it is returned.
@@ -165,6 +172,8 @@ func (pc ParseContext) ParseSelector(n datamodel.Node) (Selector, error) {
 		return pc.ParseExploreRecursive(v)
 	case SelectorKey_ExploreRecursiveEdge:
 		return pc.ParseExploreRecursiveEdge(v)
+	case SelectorKey_ExploreInterpretAs:
+		return pc.ParseExploreInterpretAs(v)
 	case SelectorKey_Matcher:
 		return pc.ParseMatcher(v)
 	default:

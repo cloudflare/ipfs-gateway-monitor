@@ -38,6 +38,11 @@ func (s ExploreFields) Decide(n datamodel.Node) bool {
 	return false
 }
 
+// Match always returns false because this is not a matcher
+func (s ExploreFields) Match(node datamodel.Node) (datamodel.Node, error) {
+	return nil, nil
+}
+
 // ParseExploreFields assembles a Selector
 // from a ExploreFields selector node
 func (pc ParseContext) ParseExploreFields(n datamodel.Node) (Selector, error) {
@@ -58,7 +63,7 @@ func (pc ParseContext) ParseExploreFields(n datamodel.Node) (Selector, error) {
 	for itr := fields.MapIterator(); !itr.Done(); {
 		kn, v, err := itr.Next()
 		if err != nil {
-			return nil, fmt.Errorf("error during selector spec parse: %s", err)
+			return nil, fmt.Errorf("error during selector spec parse: %w", err)
 		}
 
 		kstr, _ := kn.AsString()
