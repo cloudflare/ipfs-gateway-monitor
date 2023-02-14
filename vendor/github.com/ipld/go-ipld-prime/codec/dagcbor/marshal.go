@@ -99,13 +99,22 @@ func marshal(n datamodel.Node, tk *tok.Token, sink shared.TokenSink, options Enc
 		_, err = sink.Step(tk)
 		return err
 	case datamodel.Kind_Int:
-		v, err := n.AsInt()
-		if err != nil {
-			return err
+		if uin, ok := n.(datamodel.UintNode); ok {
+			v, err := uin.AsUint()
+			if err != nil {
+				return err
+			}
+			tk.Type = tok.TUint
+			tk.Uint = v
+		} else {
+			v, err := n.AsInt()
+			if err != nil {
+				return err
+			}
+			tk.Type = tok.TInt
+			tk.Int = v
 		}
-		tk.Type = tok.TInt
-		tk.Int = int64(v)
-		_, err = sink.Step(tk)
+		_, err := sink.Step(tk)
 		return err
 	case datamodel.Kind_Float:
 		v, err := n.AsFloat()
@@ -144,6 +153,9 @@ func marshal(n datamodel.Node, tk *tok.Token, sink shared.TokenSink, options Enc
 		}
 		switch lnk := v.(type) {
 		case cidlink.Link:
+			if !lnk.Cid.Defined() {
+				return fmt.Errorf("encoding undefined CIDs are not supported by this codec")
+			}
 			tk.Type = tok.TBytes
 			tk.Bytes = append([]byte{0}, lnk.Bytes()...)
 			tk.Tagged = true
@@ -162,7 +174,8 @@ func marshal(n datamodel.Node, tk *tok.Token, sink shared.TokenSink, options Enc
 func marshalMap(n datamodel.Node, tk *tok.Token, sink shared.TokenSink, options EncodeOptions) error {
 	// Emit start of map.
 	tk.Type = tok.TMapOpen
-	tk.Length = int(n.Length()) // TODO: overflow check
+	expectedLength := int(n.Length())
+	tk.Length = expectedLength // TODO: overflow check
 	if _, err := sink.Step(tk); err != nil {
 		return err
 	}
@@ -183,6 +196,9 @@ func marshalMap(n datamodel.Node, tk *tok.Token, sink shared.TokenSink, options 
 				return err
 			}
 			entries = append(entries, entry{keyStr, v})
+		}
+		if len(entries) != expectedLength {
+			return fmt.Errorf("map Length() does not match number of MapIterator() entries")
 		}
 		// Apply the desired sort function.
 		switch options.MapSortMode {
@@ -213,11 +229,13 @@ func marshalMap(n datamodel.Node, tk *tok.Token, sink shared.TokenSink, options 
 		}
 	} else { // no sorting
 		// Emit map contents (and recurse).
+		var entryCount int
 		for itr := n.MapIterator(); !itr.Done(); {
 			k, v, err := itr.Next()
 			if err != nil {
 				return err
 			}
+			entryCount++
 			tk.Type = tok.TString
 			tk.Str, err = k.AsString()
 			if err != nil {
@@ -230,9 +248,134 @@ func marshalMap(n datamodel.Node, tk *tok.Token, sink shared.TokenSink, options 
 				return err
 			}
 		}
+		if entryCount != expectedLength {
+			return fmt.Errorf("map Length() does not match number of MapIterator() entries")
+		}
 	}
 	// Emit map close.
 	tk.Type = tok.TMapClose
 	_, err := sink.Step(tk)
 	return err
+}
+
+// EncodedLength will calculate the length in bytes that the encoded form of the
+// provided Node will occupy.
+//
+// Note that this function requires a full walk of the Node's graph, which may
+// not necessarily be a trivial cost and will incur some allocations. Using this
+// method to calculate buffers to pre-allocate may not result in performance
+// gains, but rather incur an overall cost. Use with care.
+func EncodedLength(n datamodel.Node) (int64, error) {
+	switch n.Kind() {
+	case datamodel.Kind_Invalid:
+		return 0, fmt.Errorf("cannot traverse a node that is absent")
+	case datamodel.Kind_Null:
+		return 1, nil // 0xf6
+	case datamodel.Kind_Map:
+		length := uintLength(uint64(n.Length())) // length prefixed major 5
+		for itr := n.MapIterator(); !itr.Done(); {
+			k, v, err := itr.Next()
+			if err != nil {
+				return 0, err
+			}
+			keyLength, err := EncodedLength(k)
+			if err != nil {
+				return 0, err
+			}
+			length += keyLength
+			valueLength, err := EncodedLength(v)
+			if err != nil {
+				return 0, err
+			}
+			length += valueLength
+		}
+		return length, nil
+	case datamodel.Kind_List:
+		nl := n.Length()
+		length := uintLength(uint64(nl)) // length prefixed major 4
+		for i := int64(0); i < nl; i++ {
+			v, err := n.LookupByIndex(i)
+			if err != nil {
+				return 0, err
+			}
+			innerLength, err := EncodedLength(v)
+			if err != nil {
+				return 0, err
+			}
+			length += innerLength
+		}
+		return length, nil
+	case datamodel.Kind_Bool:
+		return 1, nil // 0xf4 or 0xf5
+	case datamodel.Kind_Int:
+		v, err := n.AsInt()
+		if err != nil {
+			return 0, err
+		}
+		if v < 0 {
+			v = -v - 1 // negint is stored as one less than actual
+		}
+		return uintLength(uint64(v)), nil // major 0 or 1, as small as possible
+	case datamodel.Kind_Float:
+		return 9, nil // always major 7 and 64-bit float
+	case datamodel.Kind_String:
+		v, err := n.AsString()
+		if err != nil {
+			return 0, err
+		}
+
+		return uintLength(uint64(len(v))) + int64(len(v)), nil // length prefixed major 3
+	case datamodel.Kind_Bytes:
+		v, err := n.AsBytes()
+		if err != nil {
+			return 0, err
+		}
+		return uintLength(uint64(len(v))) + int64(len(v)), nil // length prefixed major 2
+	case datamodel.Kind_Link:
+		v, err := n.AsLink()
+		if err != nil {
+			return 0, err
+		}
+		switch lnk := v.(type) {
+		case cidlink.Link:
+			length := int64(2)                    // tag,42: 0xd82a
+			bl := int64(len(lnk.Bytes())) + 1     // additional 0x00 in front of the CID bytes
+			length += uintLength(uint64(bl)) + bl // length prefixed major 2
+			return length, err
+		default:
+			return 0, fmt.Errorf("schemafree link emission only supported by this codec for CID type links")
+		}
+	default:
+		panic("unreachable")
+	}
+}
+
+// Calculate how many bytes an integer, and therefore also the leading bytes of
+// a length-prefixed token. CBOR will pack it up into the smallest possible
+// uint representation, even merging it with the major if it's <=23.
+
+type boundaryLength struct {
+	upperBound uint64
+	length     int64
+}
+
+var lengthBoundaries = []boundaryLength{
+	{24, 1},         // packed major|minor
+	{256, 2},        // major, 8-bit length
+	{65536, 3},      // major, 16-bit length
+	{4294967296, 5}, // major, 32-bit length
+	{0, 9},          // major, 64-bit length
+}
+
+func uintLength(ii uint64) int64 {
+	for _, lb := range lengthBoundaries {
+		if ii < lb.upperBound {
+			return lb.length
+		}
+	}
+	// maximum number of bytes to pack this int
+	// if this int is used as a length prefix for a map, list, string or bytes
+	// then we likely have a very bad Node that shouldn't be encoded, but the
+	// encoder may raise problems with that if the memory allocator doesn't first.
+	return lengthBoundaries[len(lengthBoundaries)-1].length
 }

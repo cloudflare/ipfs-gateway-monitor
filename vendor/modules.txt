@@ -183,8 +183,8 @@ github.com/ipfs/go-block-format
 # github.com/ipfs/go-blockservice v0.1.7
 ## explicit; go 1.15
 github.com/ipfs/go-blockservice
-# github.com/ipfs/go-cid v0.0.7
-## explicit; go 1.13
+# github.com/ipfs/go-cid v0.3.2
+## explicit; go 1.18
 github.com/ipfs/go-cid
 # github.com/ipfs/go-cidutil v0.0.2
 ## explicit
@@ -456,8 +456,8 @@ github.com/ipld/go-car/util
 # github.com/ipld/go-codec-dagpb v1.3.0
 ## explicit; go 1.15
 github.com/ipld/go-codec-dagpb
-# github.com/ipld/go-ipld-prime v0.12.2
-## explicit; go 1.16
+# github.com/ipld/go-ipld-prime v0.19.0
+## explicit; go 1.18
 github.com/ipld/go-ipld-prime
 github.com/ipld/go-ipld-prime/adl
 github.com/ipld/go-ipld-prime/codec
@@ -477,6 +477,9 @@ github.com/ipld/go-ipld-prime/node/basicnode
 github.com/ipld/go-ipld-prime/node/bindnode
 github.com/ipld/go-ipld-prime/node/mixins
 github.com/ipld/go-ipld-prime/schema
+github.com/ipld/go-ipld-prime/schema/dmt
+github.com/ipld/go-ipld-prime/schema/dsl
+github.com/ipld/go-ipld-prime/storage
 github.com/ipld/go-ipld-prime/traversal
 github.com/ipld/go-ipld-prime/traversal/selector
 github.com/ipld/go-ipld-prime/traversal/selector/builder
@@ -764,9 +767,6 @@ github.com/mikioh/tcpinfo
 # github.com/mikioh/tcpopt v0.0.0-20190314235656-172688c1accc
 ## explicit
 github.com/mikioh/tcpopt
-# github.com/minio/blake2b-simd v0.0.0-20160723061019-3f5f724cb5b1
-## explicit
-github.com/minio/blake2b-simd
 # github.com/minio/sha256-simd v1.0.0
 ## explicit; go 1.13
 github.com/minio/sha256-simd
@@ -795,16 +795,18 @@ github.com/multiformats/go-multiaddr-fmt
 # github.com/multiformats/go-multibase v0.0.3
 ## explicit; go 1.11
 github.com/multiformats/go-multibase
-# github.com/multiformats/go-multicodec v0.3.0
-## explicit; go 1.15
+# github.com/multiformats/go-multicodec v0.6.0
+## explicit; go 1.18
 github.com/multiformats/go-multicodec
-# github.com/multiformats/go-multihash v0.0.15
-## explicit; go 1.13
+# github.com/multiformats/go-multihash v0.2.1
+## explicit; go 1.17
 github.com/multiformats/go-multihash
 github.com/multiformats/go-multihash/core
 github.com/multiformats/go-multihash/register/all
 github.com/multiformats/go-multihash/register/blake2
+github.com/multiformats/go-multihash/register/blake3
 github.com/multiformats/go-multihash/register/miniosha256
+github.com/multiformats/go-multihash/register/murmur3
 github.com/multiformats/go-multihash/register/sha3
 # github.com/multiformats/go-multistream v0.2.2
 ## explicit; go 1.15
@@ -1005,7 +1007,7 @@ go.uber.org/zap/zapcore
 # go4.org v0.0.0-20200411211856-f5505b9728dd
 ## explicit; go 1.13
 go4.org/lock
-# golang.org/x/crypto v0.0.0-20210813211128-0a44fdfbc16e
+# golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e
 ## explicit; go 1.17
 golang.org/x/crypto/blake2b
 golang.org/x/crypto/blake2s
@@ -1016,6 +1018,7 @@ golang.org/x/crypto/cryptobyte/asn1
 golang.org/x/crypto/curve25519
 golang.org/x/crypto/curve25519/internal/field
 golang.org/x/crypto/hkdf
+golang.org/x/crypto/internal/poly1305
 golang.org/x/crypto/internal/subtle
 golang.org/x/crypto/poly1305
 golang.org/x/crypto/salsa20
@@ -1029,7 +1032,7 @@ golang.org/x/lint/golint
 ## explicit; go 1.12
 golang.org/x/mod/module
 golang.org/x/mod/semver
-# golang.org/x/net v0.0.0-20210813160813-60bc85c4be6d
+# golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2
 ## explicit; go 1.17
 golang.org/x/net/bpf
 golang.org/x/net/context
@@ -1138,3 +1141,6 @@ gopkg.in/tomb.v1
 # gopkg.in/yaml.v2 v2.4.0
 ## explicit; go 1.15
 gopkg.in/yaml.v2
+# lukechampine.com/blake3 v1.1.6
+## explicit; go 1.13
+lukechampine.com/blake3

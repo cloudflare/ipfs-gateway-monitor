@@ -29,7 +29,7 @@ func Get(n datamodel.Node, p datamodel.Path) (datamodel.Node, error) {
 	return Progress{}.Get(n, p)
 }
 
-// FocusedTransform traverses an datamodel.Node graph, reaches a single Node,
+// FocusedTransform traverses a datamodel.Node graph, reaches a single Node,
 // and calls the given TransformFn to decide what new node to replace the visited node with.
 // A new Node tree will be returned (the original is unchanged).
 //
@@ -87,6 +87,13 @@ func (prog *Progress) get(n datamodel.Node, p datamodel.Path, trackProgress bool
 	segments := p.Segments()
 	var prev datamodel.Node // for LinkContext
 	for i, seg := range segments {
+		// Check the budget!
+		if prog.Budget != nil {
+			prog.Budget.NodeBudget--
+			if prog.Budget.NodeBudget <= 0 {
+				return nil, &ErrBudgetExceeded{BudgetKind: "node", Path: prog.Path}
+			}
+		}
 		// Traverse the segment.
 		switch n.Kind() {
 		case datamodel.Kind_Invalid:
@@ -94,7 +101,7 @@ func (prog *Progress) get(n datamodel.Node, p datamodel.Path, trackProgress bool
 		case datamodel.Kind_Map:
 			next, err := n.LookupByString(seg.String())
 			if err != nil {
-				return nil, fmt.Errorf("error traversing segment %q on node at %q: %s", seg, p.Truncate(i), err)
+				return nil, fmt.Errorf("error traversing segment %q on node at %q: %w", seg, p.Truncate(i), err)
 			}
 			prev, n = n, next
 		case datamodel.Kind_List:
@@ -104,15 +111,23 @@ func (prog *Progress) get(n datamodel.Node, p datamodel.Path, trackProgress bool
 			}
 			next, err := n.LookupByIndex(intSeg)
 			if err != nil {
-				return nil, fmt.Errorf("error traversing segment %q on node at %q: %s", seg, p.Truncate(i), err)
+				return nil, fmt.Errorf("error traversing segment %q on node at %q: %w", seg, p.Truncate(i), err)
 			}
 			prev, n = n, next
 		default:
-			return nil, fmt.Errorf("cannot traverse node at %q: %s", p.Truncate(i), fmt.Errorf("cannot traverse terminals"))
+			return nil, fmt.Errorf("cannot traverse node at %q: %w", p.Truncate(i), fmt.Errorf("cannot traverse terminals"))
 		}
 		// Dereference any links.
 		for n.Kind() == datamodel.Kind_Link {
 			lnk, _ := n.AsLink()
+			// Check the budget!
+			if prog.Budget != nil {
+				if prog.Budget.LinkBudget <= 0 {
+					return nil, &ErrBudgetExceeded{BudgetKind: "link", Path: prog.Path, Link: lnk}
+				}
+				prog.Budget.LinkBudget--
+			}
+			// Put together the context info we'll offer to the loader and prototypeChooser.
 			lnkCtx := linking.LinkContext{
 				Ctx:        prog.Cfg.Ctx,
 				LinkPath:   p.Truncate(i),
@@ -122,13 +137,13 @@ func (prog *Progress) get(n datamodel.Node, p datamodel.Path, trackProgress bool
 			// Pick what in-memory format we will build.
 			np, err := prog.Cfg.LinkTargetNodePrototypeChooser(lnk, lnkCtx)
 			if err != nil {
-				return nil, fmt.Errorf("error traversing node at %q: could not load link %q: %s", p.Truncate(i+1), lnk, err)
+				return nil, fmt.Errorf("error traversing node at %q: could not load link %q: %w", p.Truncate(i+1), lnk, err)
 			}
 			// Load link!
 			prev = n
 			n, err = prog.Cfg.LinkSystem.Load(lnkCtx, lnk, np)
 			if err != nil {
-				return nil, fmt.Errorf("error traversing node at %q: could not load link %q: %s", p.Truncate(i+1), lnk, err)
+				return nil, fmt.Errorf("error traversing node at %q: could not load link %q: %w", p.Truncate(i+1), lnk, err)
 			}
 			if trackProgress {
 				prog.LastBlock.Path = p.Truncate(i + 1)
@@ -142,7 +157,7 @@ func (prog *Progress) get(n datamodel.Node, p datamodel.Path, trackProgress bool
 	return n, nil
 }
 
-// FocusedTransform traverses an datamodel.Node graph, reaches a single Node,
+// FocusedTransform traverses a datamodel.Node graph, reaches a single Node,
 // and calls the given TransformFn to decide what new node to replace the visited node with.
 // A new Node tree will be returned (the original is unchanged).
 //
@@ -155,6 +170,8 @@ func (prog *Progress) get(n datamodel.Node, p datamodel.Path, trackProgress bool
 // parent Node that was traversed to get here, thus propagating the changes in
 // a copy-on-write fashion -- and the FocusedTransform function as a whole will
 // return a new Node containing identical children except for those replaced.
+//
+// Returning nil from the TransformFn as the replacement node means "remove this".
 //
 // FocusedTransform can be used again inside the applied function!
 // This kind of composition can be useful for doing batches of updates.
@@ -178,7 +195,6 @@ func (prog *Progress) get(n datamodel.Node, p datamodel.Path, trackProgress bool
 // do with regular Node and NodeBuilder usage directly.  Transform just
 // does a large amount of the intermediate bookkeeping that's useful when
 // creating new values which are partial updates to existing values.
-//
 func (prog Progress) FocusedTransform(n datamodel.Node, p datamodel.Path, fn TransformFn, createParents bool) (datamodel.Node, error) {
 	prog.init()
 	nb := n.Prototype().NewBuilder()
@@ -193,6 +209,9 @@ func (prog Progress) FocusedTransform(n datamodel.Node, p datamodel.Path, fn Tra
 //
 // As implemented, this is not actually efficient if the update will be a no-op; it won't notice until it gets there.
 func (prog Progress) focusedTransform(n datamodel.Node, na datamodel.NodeAssembler, p datamodel.Path, fn TransformFn, createParents bool) error {
+	at := prog.Path
+	// Base case: if we've reached the end of the path, do the replacement here.
+	//  (Note: in some cases within maps, there is another branch that is the base case, for reasons involving removes.)
 	if p.Len() == 0 {
 		n2, err := fn(prog, n)
 		if err != nil {
@@ -201,6 +220,13 @@ func (prog Progress) focusedTransform(n datamodel.Node, na datamodel.NodeAssembl
 		return na.AssignNode(n2)
 	}
 	seg, p2 := p.Shift()
+	// Check the budget!
+	if prog.Budget != nil {
+		if prog.Budget.NodeBudget <= 0 {
+			return &ErrBudgetExceeded{BudgetKind: "node", Path: prog.Path}
+		}
+		prog.Budget.NodeBudget--
+	}
 	// Special branch for if we've entered createParent mode in an earlier step.
 	//  This needs slightly different logic because there's no prior node to reference
 	//   (and we wouldn't want to waste time creating a dummy one).
@@ -209,7 +235,7 @@ func (prog Progress) focusedTransform(n datamodel.Node, na datamodel.NodeAssembl
 		if err != nil {
 			return err
 		}
-		prog.Path = prog.Path.AppendSegment(seg)
+		prog.Path = at.AppendSegment(seg)
 		if err := ma.AssembleKey().AssignString(seg.String()); err != nil {
 			return err
 		}
@@ -230,6 +256,25 @@ func (prog Progress) focusedTransform(n datamodel.Node, na datamodel.NodeAssembl
 		if err != nil {
 			return err
 		}
+		// If we're approaching the end of the path, call the TransformFunc.
+		//  We need to know if it returns nil (meaning: do a deletion) _before_ we do the AssembleKey step.
+		//  (This results in the entire map branch having a different base case.)
+		var end bool
+		var n2 datamodel.Node
+		if p2.Len() == 0 {
+			end = true
+			n3, err := n.LookupBySegment(seg)
+			if n3 != datamodel.Absent && err != nil { // TODO badly need to simplify the standard treatment of "not found" here.  Can't even fit it all in one line!  See https://github.com/ipld/go-ipld-prime/issues/360.
+				if _, ok := err.(datamodel.ErrNotExists); !ok {
+					return err
+				}
+			}
+			prog.Path = at.AppendSegment(seg)
+			n2, err = fn(prog, n3)
+			if err != nil {
+				return err
+			}
+		}
 		// Copy children over.  Replace the target (preserving its current position!) while doing this, if found.
 		//  Note that we don't recurse into copying children (assuming AssignNode doesn't); this is as shallow/COW as the AssignNode implementation permits.
 		var replaced bool
@@ -238,16 +283,32 @@ func (prog Progress) focusedTransform(n datamodel.Node, na datamodel.NodeAssembl
 			if err != nil {
 				return err
 			}
-			if err := ma.AssembleKey().AssignNode(k); err != nil {
-				return err
-			}
-			if asPathSegment(k).Equals(seg) {
-				prog.Path = prog.Path.AppendSegment(seg)
-				if err := prog.focusedTransform(v, ma.AssembleValue(), p2, fn, createParents); err != nil {
+			if asPathSegment(k).Equals(seg) { // for the segment that's either update, update within, or being removed:
+				if end { // the last path segment in the overall instruction gets a different case because it may need to handle deletion
+					if n2 == nil {
+						replaced = true
+						continue // replace with nil means delete, which means continue early here: don't even copy the key.
+					}
+				}
+				// as long as we're not deleting, then this key will exist in the new data.
+				if err := ma.AssembleKey().AssignNode(k); err != nil {
 					return err
 				}
 				replaced = true
-			} else {
+				if n2 != nil { // if we already produced the replacement because we're at the end...
+					if err := ma.AssembleValue().AssignNode(n2); err != nil {
+						return err
+					}
+				} else { // ... otherwise, recurse:
+					prog.Path = at.AppendSegment(seg)
+					if err := prog.focusedTransform(v, ma.AssembleValue(), p2, fn, createParents); err != nil {
+						return err
+					}
+				}
+			} else { // for any other siblings of the target: just copy.
+				if err := ma.AssembleKey().AssignNode(k); err != nil {
+					return err
+				}
 				if err := ma.AssembleValue().AssignNode(v); err != nil {
 					return err
 				}
@@ -259,7 +320,7 @@ func (prog Progress) focusedTransform(n datamodel.Node, na datamodel.NodeAssembl
 		// If we didn't find the target yet: append it.
 		//  If we're at the end, always do this;
 		//  if we're in the middle, only do this if createParents mode is enabled.
-		prog.Path = prog.Path.AppendSegment(seg)
+		prog.Path = at.AppendSegment(seg)
 		if p.Len() > 1 && !createParents {
 			return fmt.Errorf("transform: parent position at %q did not exist (and createParents was false)", prog.Path)
 		}
@@ -319,17 +380,25 @@ func (prog Progress) focusedTransform(n datamodel.Node, na datamodel.NodeAssembl
 		}
 		return la.Finish()
 	case datamodel.Kind_Link:
+		lnk, _ := n.AsLink()
+		// Check the budget!
+		if prog.Budget != nil {
+			if prog.Budget.LinkBudget <= 0 {
+				return &ErrBudgetExceeded{BudgetKind: "link", Path: prog.Path, Link: lnk}
+			}
+			prog.Budget.LinkBudget--
+		}
+		// Put together the context info we'll offer to the loader and prototypeChooser.
 		lnkCtx := linking.LinkContext{
 			Ctx:        prog.Cfg.Ctx,
 			LinkPath:   prog.Path,
 			LinkNode:   n,
 			ParentNode: nil, // TODO inconvenient that we don't have this.  maybe this whole case should be a helper function.
 		}
-		lnk, _ := n.AsLink()
 		// Pick what in-memory format we will build.
 		np, err := prog.Cfg.LinkTargetNodePrototypeChooser(lnk, lnkCtx)
 		if err != nil {
-			return fmt.Errorf("transform: error traversing node at %q: could not load link %q: %s", prog.Path, lnk, err)
+			return fmt.Errorf("transform: error traversing node at %q: could not load link %q: %w", prog.Path, lnk, err)
 		}
 		// Load link!
 		//  We'll use LinkSystem.Fill here rather than Load,
@@ -337,7 +406,7 @@ func (prog Progress) focusedTransform(n datamodel.Node, na datamodel.NodeAssembl
 		nb := np.NewBuilder()
 		err = prog.Cfg.LinkSystem.Fill(lnkCtx, lnk, nb)
 		if err != nil {
-			return fmt.Errorf("transform: error traversing node at %q: could not load link %q: %s", prog.Path, lnk, err)
+			return fmt.Errorf("transform: error traversing node at %q: could not load link %q: %w", prog.Path, lnk, err)
 		}
 		prog.LastBlock.Path = prog.Path
 		prog.LastBlock.Link = lnk
@@ -354,7 +423,7 @@ func (prog Progress) focusedTransform(n datamodel.Node, na datamodel.NodeAssembl
 		n = nb.Build()
 		lnk, err = prog.Cfg.LinkSystem.Store(lnkCtx, lnk.Prototype(), n)
 		if err != nil {
-			return fmt.Errorf("transform: error storing transformed node at %q: %s", prog.Path, err)
+			return fmt.Errorf("transform: error storing transformed node at %q: %w", prog.Path, err)
 		}
 		return na.AssignLink(lnk)
 	default:
