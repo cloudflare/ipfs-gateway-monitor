@@ -30,6 +30,9 @@ func (lnk Link) Prototype() datamodel.LinkPrototype {
 func (lnk Link) String() string {
 	return lnk.Cid.String()
 }
+func (lnk Link) Binary() string {
+	return lnk.Cid.KeyString()
+}
 
 type LinkPrototype struct {
 	cid.Prefix
@@ -45,7 +48,7 @@ func (lp LinkPrototype) BuildLink(hashsum []byte) datamodel.Link {
 	p := lp.Prefix
 
 	length := p.MhLength
-	if p.MhType == multihash.ID {
+	if p.MhType == multihash.IDENTITY {
 		length = -1
 	}
 	if p.Version == 0 && (p.MhType != multihash.SHA2_256 ||

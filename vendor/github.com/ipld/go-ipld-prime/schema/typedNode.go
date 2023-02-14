@@ -41,7 +41,7 @@ type TypedNode interface {
 	// Type returns a reference to the reified schema.Type value.
 	Type() Type
 
-	// Representation returns an datamodel.Node which sees the data in this node
+	// Representation returns a datamodel.Node which sees the data in this node
 	// in its representation form.
 	//
 	// For example: if the `.Type().TypeKind()` of this node is "struct",
@@ -61,13 +61,12 @@ type TypedNode interface {
 // with a code-gen'd node builder while utilizing the automatic loading facilities
 // of the traversal package, you could write a LinkNodeBuilderChooser as follows:
 //
-//		func LinkNodeBuilderChooser(lnk datamodel.Link, lnkCtx linking.LinkContext) datamodel.NodePrototype {
-//			if tlnkNd, ok := lnkCtx.LinkNode.(schema.TypedLinkNode); ok {
-//				return tlnkNd.LinkTargetNodePrototype()
-//			}
-//			return basicnode.Prototype.Any
+//	func LinkNodeBuilderChooser(lnk datamodel.Link, lnkCtx linking.LinkContext) datamodel.NodePrototype {
+//		if tlnkNd, ok := lnkCtx.LinkNode.(schema.TypedLinkNode); ok {
+//			return tlnkNd.LinkTargetNodePrototype()
 //		}
-//
+//		return basicnode.Prototype.Any
+//	}
 type TypedLinkNode interface {
 	LinkTargetNodePrototype() datamodel.NodePrototype
 }
@@ -80,7 +79,7 @@ type TypedPrototype interface {
 	// Type returns a reference to the reified schema.Type value.
 	Type() Type
 
-	// Representation returns an datamodel.NodePrototype for the representation
+	// Representation returns a datamodel.NodePrototype for the representation
 	// form of the prototype.
 	Representation() datamodel.NodePrototype
 }
