@@ -22,7 +22,7 @@ Target environments: private LAN/Wifi, small or isolated networks.
 ## Install
 Nothing is as easy as that:
 ```bash
-$ go get -u github.com/libp2p/zeroconf
+$ go get -u github.com/libp2p/zeroconf/v2
 ```
 
 ## Browse for services in your local network
