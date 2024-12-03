@@ -4,9 +4,7 @@ import (
 	"github.com/ipld/go-ipld-prime/datamodel"
 )
 
-type TypeName string // = ast.TypeName
-
-func (tn TypeName) String() string { return string(tn) }
+type TypeName = string
 
 // typesystem.Type is an union interface; each of the `Type*` concrete types
 // in this package are one of its members.
@@ -97,6 +95,7 @@ var (
 	_ Type = &TypeBytes{}
 	_ Type = &TypeInt{}
 	_ Type = &TypeFloat{}
+	_ Type = &TypeAny{}
 	_ Type = &TypeMap{}
 	_ Type = &TypeList{}
 	_ Type = &TypeLink{}
@@ -127,6 +126,10 @@ type TypeInt struct {
 }
 
 type TypeFloat struct {
+	typeBase
+}
+
+type TypeAny struct {
 	typeBase
 }
 
@@ -230,8 +233,17 @@ type StructRepresentation_Stringjoin struct{ sep string }
 
 type TypeEnum struct {
 	typeBase
-	members []string
+	members        []string
+	representation EnumRepresentation
 }
+
+type EnumRepresentation interface{ _EnumRepresentation() }
+
+func (EnumRepresentation_String) _EnumRepresentation() {}
+func (EnumRepresentation_Int) _EnumRepresentation()    {}
+
+type EnumRepresentation_String map[string]string
+type EnumRepresentation_Int map[string]int
 
 // ImplicitValue is an sum type holding values that are implicits.
 // It's not an 'Any' value because it can't be recursive
@@ -239,7 +251,14 @@ type TypeEnum struct {
 // but if so, only its empty value is valid here).
 type ImplicitValue interface{ _ImplicitValue() }
 
+func (ImplicitValue_EmptyList) _ImplicitValue() {}
+func (ImplicitValue_EmptyMap) _ImplicitValue()  {}
+func (ImplicitValue_String) _ImplicitValue()    {}
+func (ImplicitValue_Int) _ImplicitValue()       {}
+func (ImplicitValue_Bool) _ImplicitValue()      {}
+
 type ImplicitValue_EmptyList struct{}
 type ImplicitValue_EmptyMap struct{}
-type ImplicitValue_String struct{ x string }
-type ImplicitValue_Int struct{ x int }
+type ImplicitValue_String string
+type ImplicitValue_Int int
+type ImplicitValue_Bool bool

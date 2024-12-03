@@ -74,6 +74,18 @@ func (s ExploreUnion) Decide(n datamodel.Node) bool {
 	return false
 }
 
+// Match returns true for a Union selector based on the matched union.
+func (s ExploreUnion) Match(n datamodel.Node) (datamodel.Node, error) {
+	for _, m := range s.Members {
+		if mn, err := m.Match(n); mn != nil {
+			return mn, nil
+		} else if err != nil {
+			return nil, err
+		}
+	}
+	return nil, nil
+}
+
 // ParseExploreUnion assembles a Selector
 // from an ExploreUnion selector node
 func (pc ParseContext) ParseExploreUnion(n datamodel.Node) (Selector, error) {
@@ -86,7 +98,7 @@ func (pc ParseContext) ParseExploreUnion(n datamodel.Node) (Selector, error) {
 	for itr := n.ListIterator(); !itr.Done(); {
 		_, v, err := itr.Next()
 		if err != nil {
-			return nil, fmt.Errorf("error during selector spec parse: %s", err)
+			return nil, fmt.Errorf("error during selector spec parse: %w", err)
 		}
 		member, err := pc.ParseSelector(v)
 		if err != nil {

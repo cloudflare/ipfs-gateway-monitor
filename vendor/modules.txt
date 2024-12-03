@@ -183,8 +183,8 @@ github.com/ipfs/go-block-format
 # github.com/ipfs/go-blockservice v0.1.7
 ## explicit; go 1.15
 github.com/ipfs/go-blockservice
-# github.com/ipfs/go-cid v0.0.7
-## explicit; go 1.13
+# github.com/ipfs/go-cid v0.1.0
+## explicit; go 1.15
 github.com/ipfs/go-cid
 # github.com/ipfs/go-cidutil v0.0.2
 ## explicit
@@ -453,10 +453,10 @@ github.com/ipfs/tar-utils
 ## explicit; go 1.15
 github.com/ipld/go-car
 github.com/ipld/go-car/util
-# github.com/ipld/go-codec-dagpb v1.3.0
-## explicit; go 1.15
+# github.com/ipld/go-codec-dagpb v1.3.1
+## explicit; go 1.16
 github.com/ipld/go-codec-dagpb
-# github.com/ipld/go-ipld-prime v0.12.2
+# github.com/ipld/go-ipld-prime v0.16.0
 ## explicit; go 1.16
 github.com/ipld/go-ipld-prime
 github.com/ipld/go-ipld-prime/adl
@@ -477,6 +477,9 @@ github.com/ipld/go-ipld-prime/node/basicnode
 github.com/ipld/go-ipld-prime/node/bindnode
 github.com/ipld/go-ipld-prime/node/mixins
 github.com/ipld/go-ipld-prime/schema
+github.com/ipld/go-ipld-prime/schema/dmt
+github.com/ipld/go-ipld-prime/schema/dsl
+github.com/ipld/go-ipld-prime/storage
 github.com/ipld/go-ipld-prime/traversal
 github.com/ipld/go-ipld-prime/traversal/selector
 github.com/ipld/go-ipld-prime/traversal/selector/builder
@@ -798,13 +801,15 @@ github.com/multiformats/go-multibase
 # github.com/multiformats/go-multicodec v0.3.0
 ## explicit; go 1.15
 github.com/multiformats/go-multicodec
-# github.com/multiformats/go-multihash v0.0.15
-## explicit; go 1.13
+# github.com/multiformats/go-multihash v0.1.0
+## explicit; go 1.16
 github.com/multiformats/go-multihash
 github.com/multiformats/go-multihash/core
 github.com/multiformats/go-multihash/register/all
 github.com/multiformats/go-multihash/register/blake2
+github.com/multiformats/go-multihash/register/blake3
 github.com/multiformats/go-multihash/register/miniosha256
+github.com/multiformats/go-multihash/register/murmur3
 github.com/multiformats/go-multihash/register/sha3
 # github.com/multiformats/go-multistream v0.2.2
 ## explicit; go 1.15
@@ -1138,3 +1143,6 @@ gopkg.in/tomb.v1
 # gopkg.in/yaml.v2 v2.4.0
 ## explicit; go 1.15
 gopkg.in/yaml.v2
+# lukechampine.com/blake3 v1.1.6
+## explicit; go 1.13
+lukechampine.com/blake3
