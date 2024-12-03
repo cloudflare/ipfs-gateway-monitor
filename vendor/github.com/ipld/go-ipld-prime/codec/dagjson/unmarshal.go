@@ -32,6 +32,13 @@ type DecodeOptions struct {
 	// If true, parse DAG-JSON `{"/":{"bytes":"base64 bytes..."}}` as a Bytes kind
 	// node rather than nested plain maps
 	ParseBytes bool
+
+	// If true, the decoder stops reading from the stream at the end of the JSON structure.
+	// i.e. it does not slurp remaining whitespaces and EOF.
+	// As per standard IPLD behavior, the parser considers the entire block to be
+	// part of the JSON structure and will error if there is extraneous
+	// non-whitespace data.
+	DontParseBeyondEnd bool
 }
 
 // Decode deserializes data from the given io.Reader and feeds it into the given datamodel.NodeAssembler.
@@ -42,6 +49,9 @@ func (cfg DecodeOptions) Decode(na datamodel.NodeAssembler, r io.Reader) error {
 	err := Unmarshal(na, json.NewDecoder(r), cfg)
 	if err != nil {
 		return err
+	}
+	if cfg.DontParseBeyondEnd {
+		return nil
 	}
 	// Slurp any remaining whitespace.
 	//  This behavior may be due for review.
@@ -106,6 +116,7 @@ type unmarshalState struct {
 //   - the first map key
 //   - the first map value (which will be a string)
 //   - the second map key
+//
 // and so (fortunately! whew!) we can do this in a fixed amount of memory,
 // since none of those states can reach a recursion.
 func (st *unmarshalState) step(tokSrc shared.TokenSource) error {
@@ -269,7 +280,12 @@ func (st *unmarshalState) bytesLookahead(na datamodel.NodeAssembler, tokSrc shar
 	// Okay, we made it -- this looks like bytes.  Parse it.
 	elBytes, err := base64.RawStdEncoding.DecodeString(st.tk[4].Str)
 	if err != nil {
-		return false, err
+		if _, isInput := err.(base64.CorruptInputError); isInput {
+			elBytes, err = base64.StdEncoding.DecodeString(st.tk[4].Str)
+		}
+		if err != nil {
+			return false, err
+		}
 	}
 	if err := na.AssignBytes(elBytes); err != nil {
 		return false, err
@@ -280,7 +296,8 @@ func (st *unmarshalState) bytesLookahead(na datamodel.NodeAssembler, tokSrc shar
 }
 
 // starts with the first token already primed.  Necessary to get recursion
-//  to flow right without a peek+unpeek system.
+//
+//	to flow right without a peek+unpeek system.
 func (st *unmarshalState) unmarshal(na datamodel.NodeAssembler, tokSrc shared.TokenSource) error {
 	// FUTURE: check for schema.TypedNodeBuilder that's going to parse a Link (they can slurp any token kind they want).
 	switch st.tk[0].Type {

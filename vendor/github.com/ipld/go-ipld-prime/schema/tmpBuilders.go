@@ -83,6 +83,10 @@ func SpawnMap(name TypeName, keyType TypeName, valueType TypeName, nullable bool
 	return &TypeMap{typeBase{name, nil}, false, keyType, valueType, nullable}
 }
 
+func SpawnAny(name TypeName) *TypeAny {
+	return &TypeAny{typeBase{name, nil}}
+}
+
 func SpawnStruct(name TypeName, fields []StructField, repr StructRepresentation) *TypeStruct {
 	v := &TypeStruct{
 		typeBase{name, nil},
@@ -112,6 +116,9 @@ func SpawnStructField(name string, typ TypeName, optional bool, nullable bool) S
 func SpawnStructRepresentationMap(renames map[string]string) StructRepresentation_Map {
 	return StructRepresentation_Map{renames, nil}
 }
+func SpawnStructRepresentationMap2(renames map[string]string, implicits map[string]ImplicitValue) StructRepresentation_Map {
+	return StructRepresentation_Map{renames, implicits}
+}
 func SpawnStructRepresentationTuple() StructRepresentation_Tuple {
 	return StructRepresentation_Tuple{}
 }
@@ -132,6 +139,10 @@ func SpawnUnionRepresentationStringprefix(delim string, table map[string]TypeNam
 	return UnionRepresentation_Stringprefix{delim, table}
 }
 
+func SpawnEnum(name TypeName, members []string, repr EnumRepresentation) *TypeEnum {
+	return &TypeEnum{typeBase{name, nil}, members, repr}
+}
+
 // The methods relating to TypeSystem are also mutation-heavy and placeholdery.
 
 func (ts *TypeSystem) Init() {
@@ -150,7 +161,7 @@ func (ts TypeSystem) GetTypes() map[TypeName]Type {
 	return ts.namedTypes
 }
 func (ts TypeSystem) TypeByName(n string) Type {
-	return ts.namedTypes[TypeName(n)]
+	return ts.namedTypes[n]
 }
 func (ts TypeSystem) Names() []TypeName {
 	return ts.names

@@ -171,7 +171,7 @@ func (p Path) Join(p2 Path) Path {
 	return p
 }
 
-// AppendSegmentString is as per Join, but a shortcut when appending single segments using strings.
+// AppendSegment is as per Join, but a shortcut when appending single segments.
 func (p Path) AppendSegment(ps PathSegment) Path {
 	l := len(p.segments)
 	combinedSegments := make([]PathSegment, l+1)
@@ -181,9 +181,14 @@ func (p Path) AppendSegment(ps PathSegment) Path {
 	return p
 }
 
-// AppendSegmentString is as per Join, but a shortcut when appending single segments using strings.
+// AppendSegmentString is as per AppendSegment, but a shortcut when the segment is a string.
 func (p Path) AppendSegmentString(ps string) Path {
 	return p.AppendSegment(PathSegmentOfString(ps))
+}
+
+// AppendSegmentInt is as per AppendSegment, but a shortcut when the segment is an int.
+func (p Path) AppendSegmentInt(ps int64) Path {
+	return p.AppendSegment(PathSegmentOfInt(ps))
 }
 
 // Parent returns a path with the last of its segments popped off (or
@@ -206,6 +211,14 @@ func (p Path) Last() PathSegment {
 		return PathSegment{}
 	}
 	return p.segments[len(p.segments)-1]
+}
+
+// Pop returns a path with all segments except the last.
+func (p Path) Pop() Path {
+	if len(p.segments) < 1 {
+		return Path{}
+	}
+	return Path{p.segments[0 : len(p.segments)-1]}
 }
 
 // Shift returns the first segment of the path together with the remaining path after that first segment.

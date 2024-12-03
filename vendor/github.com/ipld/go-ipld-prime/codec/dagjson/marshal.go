@@ -61,7 +61,8 @@ func Marshal(n datamodel.Node, sink shared.TokenSink, options EncodeOptions) err
 	case datamodel.Kind_Map:
 		// Emit start of map.
 		tk.Type = tok.TMapOpen
-		tk.Length = int(n.Length()) // TODO: overflow check
+		expectedLength := int(n.Length())
+		tk.Length = expectedLength // TODO: overflow check
 		if _, err := sink.Step(&tk); err != nil {
 			return err
 		}
@@ -83,6 +84,9 @@ func Marshal(n datamodel.Node, sink shared.TokenSink, options EncodeOptions) err
 				}
 				entries = append(entries, entry{keyStr, v})
 			}
+			if len(entries) != expectedLength {
+				return fmt.Errorf("map Length() does not match number of MapIterator() entries")
+			}
 			// Apply the desired sort function.
 			switch options.MapSortMode {
 			case codec.MapSortMode_Lexical:
@@ -100,15 +104,20 @@ func Marshal(n datamodel.Node, sink shared.TokenSink, options EncodeOptions) err
 				})
 			}
 			// Emit map contents (and recurse).
+			var entryCount int
 			for _, e := range entries {
 				tk.Type = tok.TString
 				tk.Str = e.key
+				entryCount++
 				if _, err := sink.Step(&tk); err != nil {
 					return err
 				}
 				if err := Marshal(e.value, sink, options); err != nil {
 					return err
 				}
+			}
+			if entryCount != expectedLength {
+				return fmt.Errorf("map Length() does not match number of MapIterator() entries")
 			}
 		} else {
 			// Don't sort map, emit map contents (and recurse).
@@ -193,54 +202,50 @@ func Marshal(n datamodel.Node, sink shared.TokenSink, options EncodeOptions) err
 		_, err = sink.Step(&tk)
 		return err
 	case datamodel.Kind_Bytes:
+		if !options.EncodeBytes {
+			return fmt.Errorf("cannot marshal IPLD bytes to this codec")
+		}
 		v, err := n.AsBytes()
 		if err != nil {
 			return err
 		}
-		if options.EncodeBytes {
-			// Precisely seven tokens to emit:
-			tk.Type = tok.TMapOpen
-			tk.Length = 1
-			if _, err = sink.Step(&tk); err != nil {
-				return err
-			}
-			tk.Type = tok.TString
-			tk.Str = "/"
-			if _, err = sink.Step(&tk); err != nil {
-				return err
-			}
-			tk.Type = tok.TMapOpen
-			tk.Length = 1
-			if _, err = sink.Step(&tk); err != nil {
-				return err
-			}
-			tk.Type = tok.TString
-			tk.Str = "bytes"
-			if _, err = sink.Step(&tk); err != nil {
-				return err
-			}
-			tk.Str = base64.RawStdEncoding.EncodeToString(v)
-			if _, err = sink.Step(&tk); err != nil {
-				return err
-			}
-			tk.Type = tok.TMapClose
-			if _, err = sink.Step(&tk); err != nil {
-				return err
-			}
-			tk.Type = tok.TMapClose
-			if _, err = sink.Step(&tk); err != nil {
-				return err
-			}
-			return nil
-		} else {
-			tk.Type = tok.TBytes
-			tk.Bytes = v
-			_, err = sink.Step(&tk)
+		// Precisely seven tokens to emit:
+		tk.Type = tok.TMapOpen
+		tk.Length = 1
+		if _, err = sink.Step(&tk); err != nil {
 			return err
 		}
+		tk.Type = tok.TString
+		tk.Str = "/"
+		if _, err = sink.Step(&tk); err != nil {
+			return err
+		}
+		tk.Type = tok.TMapOpen
+		tk.Length = 1
+		if _, err = sink.Step(&tk); err != nil {
+			return err
+		}
+		tk.Type = tok.TString
+		tk.Str = "bytes"
+		if _, err = sink.Step(&tk); err != nil {
+			return err
+		}
+		tk.Str = base64.RawStdEncoding.EncodeToString(v)
+		if _, err = sink.Step(&tk); err != nil {
+			return err
+		}
+		tk.Type = tok.TMapClose
+		if _, err = sink.Step(&tk); err != nil {
+			return err
+		}
+		tk.Type = tok.TMapClose
+		if _, err = sink.Step(&tk); err != nil {
+			return err
+		}
+		return nil
 	case datamodel.Kind_Link:
 		if !options.EncodeLinks {
-			return fmt.Errorf("cannot Marshal ipld links to JSON")
+			return fmt.Errorf("cannot marshal IPLD links to this codec")
 		}
 		v, err := n.AsLink()
 		if err != nil {
@@ -248,6 +253,9 @@ func Marshal(n datamodel.Node, sink shared.TokenSink, options EncodeOptions) err
 		}
 		switch lnk := v.(type) {
 		case cidlink.Link:
+			if !lnk.Cid.Defined() {
+				return fmt.Errorf("encoding undefined CIDs are not supported by this codec")
+			}
 			// Precisely four tokens to emit:
 			tk.Type = tok.TMapOpen
 			tk.Length = 1
@@ -269,7 +277,7 @@ func Marshal(n datamodel.Node, sink shared.TokenSink, options EncodeOptions) err
 			}
 			return nil
 		default:
-			return fmt.Errorf("schemafree link emission only supported by this codec for CID type links")
+			return fmt.Errorf("schemafree link emission only supported by this codec for CID type links; got type %T", lnk)
 		}
 	default:
 		panic("unreachable")

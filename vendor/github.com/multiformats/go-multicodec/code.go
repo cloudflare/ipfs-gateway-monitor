@@ -9,9 +9,7 @@ import (
 
 //go:generate go run gen.go
 //go:generate gofmt -w code_table.go
-//go:generate go get golang.org/x/tools/cmd/stringer
-//go:generate go run golang.org/x/tools/cmd/stringer -type=Code -linecomment
-//go:generate go mod tidy
+//go:generate go run golang.org/x/tools/cmd/stringer@v0.1.10 -type=Code -linecomment
 
 // Code describes an integer reserved in the multicodec table, defined at
 // github.com/multiformats/multicodec.
@@ -76,4 +74,15 @@ func (c *Code) Set(text string) error {
 		}
 	}
 	return fmt.Errorf("unknown multicodec: %q", text)
+}
+
+// Note that KnownCodes is a function backed by a code-generated slice.
+// Later on, if the slice gets too large, we could codegen a packed form
+// and only expand to a regular slice via a sync.Once.
+// A function also makes it a bit clearer that the list should be read-only.
+
+// KnownCodes returns a list of all codes registered in the multicodec table.
+// The returned slice should be treated as read-only.
+func KnownCodes() []Code {
+	return knownCodes
 }
